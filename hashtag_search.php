@@ -3,17 +3,15 @@ require_once 'config/database.php';
 require_once 'functions/helpers.php';
 requireLogin();
 
-$tag = $_GET['tag'] ?? '';
-$tag = ltrim(trim($tag), '#');
+$tag = trim(ltrim($_GET['tag'] ?? '', '#'));
 if ($tag === '') {
     header("Location: index.php");
     exit();
 }
 
-$searchTerm = '%#' . $conn->real_escape_string($tag) . '%';
-
+$search = '%#' . $conn->real_escape_string($tag) . '%';
 $stmt = $conn->prepare("SELECT p.*, u.username, u.profile_pic FROM posts p JOIN users u ON p.user_id = u.id WHERE p.content LIKE ? ORDER BY p.created_at DESC");
-$stmt->bind_param("s", $searchTerm);
+$stmt->bind_param("s", $search);
 $stmt->execute();
 $posts = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 

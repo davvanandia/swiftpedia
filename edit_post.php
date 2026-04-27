@@ -4,6 +4,7 @@ require_once 'functions/helpers.php';
 requireLogin();
 
 $postId = $_GET['id'] ?? 0;
+
 $stmt = $conn->prepare("SELECT * FROM posts WHERE id = ?");
 $stmt->bind_param("i", $postId);
 $stmt->execute();
@@ -17,8 +18,8 @@ if (!$post || $post['user_id'] != $_SESSION['user_id']) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $content = trim($_POST['content']);
     $imagePath = $post['image_path'];
-    $filePath = $post['file_path'];
-    
+    $filePath  = $post['file_path'];
+
     if (!empty($_FILES['image']['name'])) {
         deleteFile('assets/uploads/post_images/' . $post['image_path']);
         $imagePath = uploadFile($_FILES['image'], 'assets/uploads/post_images/');
@@ -27,11 +28,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         deleteFile('assets/uploads/post_files/' . $post['file_path']);
         $filePath = uploadFile($_FILES['file'], 'assets/uploads/post_files/');
     }
-    
-    $stmt = $conn->prepare("UPDATE posts SET content = ?, image_path = ?, file_path = ?, updated_at = NOW() WHERE id = ?");
-    $stmt->bind_param("sssi", $content, $imagePath, $filePath, $postId);
-    $stmt->execute();
+
+    $upd = $conn->prepare("UPDATE posts SET content = ?, image_path = ?, file_path = ?, updated_at = NOW() WHERE id = ?");
+    $upd->bind_param("sssi", $content, $imagePath, $filePath, $postId);
+    $upd->execute();
     header("Location: index.php");
+    exit();
 }
 
 include 'includes/header.php';

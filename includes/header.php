@@ -19,7 +19,7 @@
 <nav class="navbar navbar-expand-lg bg-dark navbar-dark sticky-top">
     <div class="container">
         <a class="navbar-brand" href="index.php">
-            <i class="bi bi-twitter-x"></i> Swiftpedia
+            Swiftpedia
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>

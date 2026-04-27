@@ -9,19 +9,16 @@ $user = getUserById($conn, $userId);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $bio = trim($_POST['bio']);
     $profilePic = $user['profile_pic'];
-    
+
     if (!empty($_FILES['profile_pic']['name'])) {
-        if ($user['profile_pic'] && $user['profile_pic'] != 'default.png') {
-            deleteFile('assets/uploads/profile/' . $user['profile_pic']);
-        }
+        if ($user['profile_pic'] && $user['profile_pic'] != 'default.png') deleteFile('assets/uploads/profile/' . $user['profile_pic']);
         $newPic = uploadFile($_FILES['profile_pic'], 'assets/uploads/profile/', ['jpg','jpeg','png','gif'], 2097152);
         if ($newPic) $profilePic = $newPic;
     }
-    
-    $stmt = $conn->prepare("UPDATE users SET bio = ?, profile_pic = ? WHERE id = ?");
-    $stmt->bind_param("ssi", $bio, $profilePic, $userId);
-    $stmt->execute();
-    
+
+    $upd = $conn->prepare("UPDATE users SET bio = ?, profile_pic = ? WHERE id = ?");
+    $upd->bind_param("ssi", $bio, $profilePic, $userId);
+    $upd->execute();
     $_SESSION['profile_pic'] = $profilePic;
     header("Location: profile.php?updated=1");
     exit();
@@ -34,28 +31,25 @@ $userPosts = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
 include 'includes/header.php';
 ?>
-
 <div class="container mt-4">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="index.php">Beranda</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Profil Saya</li>
+            <li class="breadcrumb-item active">Profil Saya</li>
         </ol>
     </nav>
-
     <?php if (isset($_GET['updated'])): ?>
         <div class="alert alert-success">Profil berhasil diperbarui!</div>
     <?php endif; ?>
-
     <div class="row">
         <div class="col-md-4">
             <div class="card shadow-sm">
                 <div class="card-body text-center">
                     <?php
-                    $myAvatar = 'assets/uploads/profile/' . safeOutput($user['profile_pic']);
-                    if (!file_exists($myAvatar)) $myAvatar = 'assets/uploads/profile/default.png';
+                    $avatar = 'assets/uploads/profile/' . safeOutput($user['profile_pic']);
+                    if (!file_exists($avatar)) $avatar = 'assets/uploads/profile/default.png';
                     ?>
-                    <img src="<?= $myAvatar ?>" class="rounded-circle mb-3" width="150" height="150" style="object-fit: cover;">
+                    <img src="<?= $avatar ?>" class="rounded-circle mb-3" width="150" height="150" style="object-fit: cover;">
                     <h3><?= safeOutput($user['username']) ?></h3>
                     <p class="text-muted"><?= safeOutput($user['email']) ?></p>
                     <hr>
@@ -77,9 +71,7 @@ include 'includes/header.php';
         </div>
         <div class="col-md-8">
             <div class="card shadow-sm">
-                <div class="card-header bg-white">
-                    <h5><i class="bi bi-file-post"></i> Postingan Saya</h5>
-                </div>
+                <div class="card-header bg-white"><h5><i class="bi bi-file-post"></i> Postingan Saya</h5></div>
                 <div class="card-body">
                     <?php if (count($userPosts) == 0): ?>
                         <p class="text-muted">Belum ada postingan. <a href="new_post.php"><i class="bi bi-plus-circle"></i> Buat postingan sekarang</a></p>
@@ -108,5 +100,4 @@ include 'includes/header.php';
         </div>
     </div>
 </div>
-
 <?php include 'includes/footer.php'; ?>

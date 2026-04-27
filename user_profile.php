@@ -15,11 +15,9 @@ if (!$user) {
     exit();
 }
 
-// Pastikan bio tidak pernah NULL
 $user['bio'] = $user['bio'] ?? '';
 $user['profile_pic'] = $user['profile_pic'] ?? 'default.png';
 
-// Ambil postingan
 $stmt = $conn->prepare("SELECT * FROM posts WHERE user_id = ? ORDER BY created_at DESC");
 $stmt->bind_param("i", $userId);
 $stmt->execute();
@@ -27,7 +25,6 @@ $userPosts = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
 include 'includes/header.php';
 ?>
-
 <div class="container mt-4">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
@@ -35,39 +32,28 @@ include 'includes/header.php';
             <li class="breadcrumb-item active">Profil <?= safeOutput($user['username']) ?></li>
         </ol>
     </nav>
-
     <div class="row">
         <div class="col-md-4">
             <div class="card shadow-sm">
                 <div class="card-body text-center">
                     <?php
-                    $avatarPath = 'assets/uploads/profile/' . $user['profile_pic'];
-                    if (!file_exists($avatarPath)) $avatarPath = 'assets/uploads/profile/default.png';
+                    $avatar = 'assets/uploads/profile/' . $user['profile_pic'];
+                    if (!file_exists($avatar)) $avatar = 'assets/uploads/profile/default.png';
                     ?>
-                    <img src="<?= $avatarPath ?>" class="rounded-circle mb-3" width="150" height="150" style="object-fit: cover;">
+                    <img src="<?= $avatar ?>" class="rounded-circle mb-3" width="150" height="150" style="object-fit: cover;">
                     <h3><?= safeOutput($user['username']) ?></h3>
                     <p class="text-muted">Bergabung sejak <?= date('d F Y', strtotime($user['created_at'] ?? 'now')) ?></p>
                     <hr>
                     <div class="text-start">
                         <strong>Bio:</strong>
-                        <p>
-                            <?php 
-                            if ($user['bio'] === '') {
-                                echo '<em>Tidak ada bio</em>';
-                            } else {
-                                echo nl2br(safeOutput($user['bio']));
-                            }
-                            ?>
-                        </p>
+                        <p><?= $user['bio'] === '' ? '<em>Tidak ada bio</em>' : nl2br(safeOutput($user['bio'])) ?></p>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-8">
             <div class="card shadow-sm">
-                <div class="card-header bg-white">
-                    <h5><i class="bi bi-file-post"></i> Postingan <?= safeOutput($user['username']) ?></h5>
-                </div>
+                <div class="card-header bg-white"><h5><i class="bi bi-file-post"></i> Postingan <?= safeOutput($user['username']) ?></h5></div>
                 <div class="card-body">
                     <?php if (count($userPosts) == 0): ?>
                         <p class="text-muted">Belum ada postingan.</p>
@@ -90,5 +76,4 @@ include 'includes/header.php';
         </div>
     </div>
 </div>
-
 <?php include 'includes/footer.php'; ?>

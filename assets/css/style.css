@@ -1,0 +1,25 @@
+body {
+    background-color: #f8f9fa;
+}
+.card {
+    border-radius: 15px;
+    transition: transform 0.1s;
+}
+.comments-section {
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 10px;
+}
+a {
+    text-decoration: none;
+}
+.sticky-top {
+    position: sticky;
+    top: 80px;
+    z-index: 1;
+}
+.breadcrumb {
+    background-color: transparent;
+    padding: 0;
+    margin-bottom: 1rem;
+}

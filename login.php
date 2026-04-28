@@ -1,7 +1,10 @@
 <?php
+// Halaman login user
+
 require_once 'config/database.php';
 require_once 'functions/helpers.php';
 
+// Jika sudah login, langsung ke index
 if (isLoggedIn()) {
     header("Location: index.php");
     exit();
@@ -12,11 +15,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'];
     $password = $_POST['password'];
 
+    // Cari user berdasarkan username atau email
     $stmt = $conn->prepare("SELECT id, username, password, profile_pic FROM users WHERE username = ? OR email = ?");
     $stmt->bind_param("ss", $username, $username);
     $stmt->execute();
     $user = $stmt->get_result()->fetch_assoc();
 
+    // Verifikasi password
     if ($user && password_verify($password, $user['password'])) {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];

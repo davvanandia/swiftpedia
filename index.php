@@ -1,9 +1,11 @@
 <?php
+// Halaman utama: menampilkan semua postingan dan komentar
+
 require_once 'config/database.php';
 require_once 'functions/helpers.php';
 requireLogin();
 
-// Ambil semua postingan
+// Ambil semua postingan terbaru
 $result = $conn->query("SELECT p.*, u.username, u.profile_pic FROM posts p JOIN users u ON p.user_id = u.id ORDER BY p.created_at DESC");
 $posts = $result->fetch_all(MYSQLI_ASSOC);
 
@@ -11,12 +13,14 @@ include 'includes/header.php';
 ?>
 
 <div class="container mt-4">
+    <!-- Breadcrumb navigasi -->
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item active">Beranda</li>
         </ol>
     </nav>
 
+    <!-- Alert jika sukses posting -->
     <?php if (isset($_GET['success']) && $_GET['success'] == 'posted'): ?>
         <div class="alert alert-success alert-dismissible fade show">
             <i class="bi bi-check-circle"></i> Postingan berhasil dibuat!
@@ -25,7 +29,7 @@ include 'includes/header.php';
     <?php endif; ?>
 
     <div class="row">
-        <!-- Sidebar kiri -->
+        <!-- Sidebar kiri: pencarian hashtag -->
         <div class="col-md-3">
             <div class="card shadow-sm sticky-top" style="top: 20px;">
                 <div class="card-body">
@@ -41,12 +45,13 @@ include 'includes/header.php';
             </div>
         </div>
 
-        <!-- Feed utama -->
+        <!-- Feed utama: daftar postingan -->
         <div class="col-md-6">
             <?php foreach ($posts as $post): ?>
                 <div class="card mb-3 shadow-sm" id="post-<?= $post['id'] ?>">
                     <div class="card-body">
                         <div class="d-flex align-items-start gap-3">
+                            <!-- Avatar user -->
                             <?php
                             $avatar = 'assets/uploads/profile/' . safeOutput($post['profile_pic']);
                             if (!file_exists($avatar)) $avatar = 'assets/uploads/profile/default.png';
@@ -61,14 +66,17 @@ include 'includes/header.php';
                                 </div>
                                 <p class="mt-2"><?= highlightHashtags(safeOutput($post['content'])) ?></p>
 
+                                <!-- Tampilkan gambar postingan jika ada -->
                                 <?php if ($post['image_path']): ?>
                                     <img src="assets/uploads/post_images/<?= safeOutput($post['image_path']) ?>" class="img-fluid rounded mb-2" style="max-height: 300px;">
                                 <?php endif; ?>
+                                <!-- Tampilkan file lampiran jika ada -->
                                 <?php if ($post['file_path']): ?>
                                     <div class="mb-2">
                                         <a href="assets/uploads/post_files/<?= safeOutput($post['file_path']) ?>" class="btn btn-sm btn-outline-secondary" target="_blank"><i class="bi bi-paperclip"></i> Lampiran</a>
                                     </div>
                                 <?php endif; ?>
+                                <!-- Tombol edit/hapus jika pemilik postingan -->
                                 <?php if ($post['user_id'] == $_SESSION['user_id']): ?>
                                     <div class="mb-2">
                                         <a href="edit_post.php?id=<?= $post['id'] ?>" class="btn btn-sm btn-outline-warning"><i class="bi bi-pencil"></i> Edit</a>
@@ -76,21 +84,23 @@ include 'includes/header.php';
                                     </div>
                                 <?php endif; ?>
                                 <hr>
+                                <!-- Bagian komentar -->
                                 <div class="comments-section">
                                     <h6><i class="bi bi-chat-dots"></i> Komentar</h6>
                                     <div id="comments-container-<?= $post['id'] ?>">
                                         <?php
                                         $comments = getCommentsByPost($conn, $post['id'], null);
-                                        echo displayComments($comments, $post['id']);
+                                        echo displayComments($comments, $post['id']); // fungsi displayComments didefinisikan di bawah
                                         ?>
                                     </div>
+                                    <!-- Form komentar baru (root) -->
                                     <form action="create_comment.php" method="POST" enctype="multipart/form-data" class="mt-3">
                                         <input type="hidden" name="post_id" value="<?= $post['id'] ?>">
                                         <input type="hidden" name="parent_id" value="0">
                                         <textarea name="content" class="form-control form-control-sm mb-1" rows="2" placeholder="Tulis komentar... (max 250 karakter)" maxlength="250" required></textarea>
                                         <div class="row mb-1">
-                                            <div class="col"><input type="file" name="image" class="form-control form-control-sm" accept="image/*"></div>
-                                            <div class="col"><input type="file" name="file" class="form-control form-control-sm"></div>
+                                            <div class="col"><input type="file" name="image" class="form-control form-control-sm" accept="image/*">Image</div>
+                                            <div class="col"><input type="file" name="file" class="form-control form-control-sm">File</div>
                                         </div>
                                         <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-send"></i> Kirim Komentar</button>
                                     </form>
@@ -102,7 +112,7 @@ include 'includes/header.php';
             <?php endforeach; ?>
         </div>
 
-        <!-- Sidebar kanan -->
+        <!-- Sidebar kanan: info user yang login -->
         <div class="col-md-3">
             <div class="card shadow-sm sticky-top" style="top: 20px;">
                 <div class="card-body text-center">
@@ -120,10 +130,11 @@ include 'includes/header.php';
 </div>
 
 <?php
+// Fungsi rekursif untuk menampilkan komentar bertingkat (nested)
 function displayComments($comments, $postId, $depth = 0) {
     if (empty($comments)) return '';
     $html = '';
-    $ml = $depth * 30;
+    $ml = $depth * 30; // indentasi kiri berdasarkan level
     foreach ($comments as $c) {
         $avatar = 'assets/uploads/profile/' . safeOutput($c['profile_pic']);
         if (!file_exists($avatar)) $avatar = 'assets/uploads/profile/default.png';
@@ -135,11 +146,14 @@ function displayComments($comments, $postId, $depth = 0) {
         $html .= '<p class="mb-1">' . highlightHashtags(safeOutput($c['content'])) . '</p>';
         if ($c['image_path']) $html .= '<img src="assets/uploads/comment_images/' . safeOutput($c['image_path']) . '" class="img-fluid rounded mb-1" style="max-height:150px;">';
         if ($c['file_path']) $html .= '<div><a href="assets/uploads/comment_files/' . safeOutput($c['file_path']) . '" target="_blank" class="small"><i class="bi bi-file-earmark"></i> Lampiran</a></div>';
+        // Tombol edit/hapus untuk pemilik komentar
         if ($c['user_id'] == $_SESSION['user_id']) {
             $html .= '<div class="mt-1"><a href="edit_comment.php?id=' . $c['id'] . '" class="btn btn-sm btn-outline-warning"><i class="bi bi-pencil"></i> Edit</a> ';
             $html .= '<a href="delete_comment.php?id=' . $c['id'] . '" class="btn btn-sm btn-outline-danger" onclick="return confirm(\'Yakin hapus komentar?\')"><i class="bi bi-trash"></i> Hapus</a></div>';
         }
+        // Tombol balas
         $html .= '<div class="mt-1"><button class="btn btn-sm btn-link text-primary p-0 reply-btn" data-post-id="' . $postId . '" data-parent-id="' . $c['id'] . '"><i class="bi bi-reply"></i> Balas</button></div>';
+        // Form balas (tersembunyi awal)
         $html .= '<div id="reply-form-' . $c['id'] . '" style="display:none;" class="mt-2">';
         $html .= '<form action="create_comment.php" method="POST" enctype="multipart/form-data">';
         $html .= '<input type="hidden" name="post_id" value="' . $postId . '"><input type="hidden" name="parent_id" value="' . $c['id'] . '">';
@@ -148,6 +162,7 @@ function displayComments($comments, $postId, $depth = 0) {
         $html .= '<button type="submit" class="btn btn-sm btn-primary">Kirim Balasan</button>';
         $html .= '<button type="button" class="btn btn-sm btn-secondary cancel-reply" data-parent-id="' . $c['id'] . '">Batal</button></form></div>';
         $html .= '</div></div>';
+        // Panggil rekursif untuk balasan
         if (!empty($c['replies'])) $html .= displayComments($c['replies'], $postId, $depth + 1);
         $html .= '</div>';
     }
@@ -156,6 +171,7 @@ function displayComments($comments, $postId, $depth = 0) {
 ?>
 
 <script>
+// JavaScript untuk menampilkan/menyembunyikan form reply
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.reply-btn').forEach(btn => {
         btn.addEventListener('click', function() {

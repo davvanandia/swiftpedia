@@ -1,4 +1,6 @@
 <?php
+// Menampilkan profil user lain (public)
+
 require_once 'config/database.php';
 require_once 'functions/helpers.php';
 requireLogin();
@@ -15,9 +17,11 @@ if (!$user) {
     exit();
 }
 
+// Set default jika bio atau foto profil kosong
 $user['bio'] = $user['bio'] ?? '';
 $user['profile_pic'] = $user['profile_pic'] ?? 'default.png';
 
+// Ambil postingan user tersebut
 $stmt = $conn->prepare("SELECT * FROM posts WHERE user_id = ? ORDER BY created_at DESC");
 $stmt->bind_param("i", $userId);
 $stmt->execute();

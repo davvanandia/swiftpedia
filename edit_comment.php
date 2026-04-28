@@ -1,20 +1,25 @@
 <?php
+// Halaman mengedit komentar (tampilkan form + proses update)
+
 require_once 'config/database.php';
 require_once 'functions/helpers.php';
 requireLogin();
 
 $commentId = $_GET['id'] ?? 0;
 
+// Ambil data komentar
 $stmt = $conn->prepare("SELECT * FROM comments WHERE id = ?");
 $stmt->bind_param("i", $commentId);
 $stmt->execute();
 $comment = $stmt->get_result()->fetch_assoc();
 
+// Jika tidak ditemukan atau bukan milik user, redirect
 if (!$comment || $comment['user_id'] != $_SESSION['user_id']) {
     header("Location: index.php");
     exit();
 }
 
+// Proses update jika form disubmit
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $content = trim($_POST['content']);
     if (strlen($content) > 250) {
@@ -23,17 +28,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $imagePath = $comment['image_path'];
         $filePath  = $comment['file_path'];
 
+        // Upload gambar baru jika ada, hapus yang lama
         if (!empty($_FILES['image']['name'])) {
             deleteFile('assets/uploads/comment_images/' . $comment['image_path']);
             $up = uploadFile($_FILES['image'], 'assets/uploads/comment_images/', ['jpg','jpeg','png','gif'], 2097152);
             if ($up) $imagePath = $up;
         }
+        // Upload file baru jika ada
         if (!empty($_FILES['file']['name'])) {
             deleteFile('assets/uploads/comment_files/' . $comment['file_path']);
             $up = uploadFile($_FILES['file'], 'assets/uploads/comment_files/', ['pdf','doc','docx','txt','zip'], 5242880);
             if ($up) $filePath = $up;
         }
 
+        // Update database
         $upd = $conn->prepare("UPDATE comments SET content = ?, image_path = ?, file_path = ?, updated_at = NOW() WHERE id = ?");
         $upd->bind_param("sssi", $content, $imagePath, $filePath, $commentId);
         $upd->execute();
@@ -42,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// Tampilkan form edit (HTML)
 include 'includes/header.php';
 ?>
 <div class="row justify-content-center">

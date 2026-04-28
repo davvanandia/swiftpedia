@@ -1,4 +1,6 @@
 <?php
+// Halaman profil user yang sedang login (edit bio & foto)
+
 require_once 'config/database.php';
 require_once 'functions/helpers.php';
 requireLogin();
@@ -6,16 +8,21 @@ requireLogin();
 $userId = $_SESSION['user_id'];
 $user = getUserById($conn, $userId);
 
+// Proses update profil
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $bio = trim($_POST['bio']);
     $profilePic = $user['profile_pic'];
 
+    // Upload foto profil baru jika ada
     if (!empty($_FILES['profile_pic']['name'])) {
-        if ($user['profile_pic'] && $user['profile_pic'] != 'default.png') deleteFile('assets/uploads/profile/' . $user['profile_pic']);
+        if ($user['profile_pic'] && $user['profile_pic'] != 'default.png') {
+            deleteFile('assets/uploads/profile/' . $user['profile_pic']);
+        }
         $newPic = uploadFile($_FILES['profile_pic'], 'assets/uploads/profile/', ['jpg','jpeg','png','gif'], 2097152);
         if ($newPic) $profilePic = $newPic;
     }
 
+    // Update database
     $upd = $conn->prepare("UPDATE users SET bio = ?, profile_pic = ? WHERE id = ?");
     $upd->bind_param("ssi", $bio, $profilePic, $userId);
     $upd->execute();
@@ -24,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit();
 }
 
+// Ambil semua postingan milik user
 $stmt = $conn->prepare("SELECT * FROM posts WHERE user_id = ? ORDER BY created_at DESC");
 $stmt->bind_param("i", $userId);
 $stmt->execute();

@@ -1,7 +1,10 @@
 <?php
+// Halaman registrasi user baru
+
 require_once 'config/database.php';
 require_once 'functions/helpers.php';
 
+// Jika sudah login, redirect ke index
 if (isLoggedIn()) {
     header("Location: index.php");
     exit();
@@ -13,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email    = trim($_POST['email']);
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
 
+    // Simpan user baru
     $stmt = $conn->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
     $stmt->bind_param("sss", $username, $email, $password);
     if ($stmt->execute()) {
